@@ -1,9 +1,7 @@
 package main;
-import javax.annotation.processing.RoundEnvironment;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.io.Console;
 
 public class Calculator implements ActionListener, KeyListener{
 	
@@ -128,8 +126,7 @@ public class Calculator implements ActionListener, KeyListener{
 		for(int i=0;i<10;i++)
 			if(e.getSource()==num[i])
 			{
-				if(operatorSet==1) {
-					operatorSet=0;
+				if(operatorSet==1 && decimalTwo==false) {
 					textField.setText("");
 				}
 				
@@ -137,7 +134,8 @@ public class Calculator implements ActionListener, KeyListener{
 					textField.setText(String.valueOf(i));
 				}
 				else
-					textField.setText(textField.getText().concat(String.valueOf(i)));
+					if(textField.getText().length()<8)//LIMIT NUMBERS
+						textField.setText(textField.getText().concat(String.valueOf(i)));
 			}
 
 		
@@ -149,7 +147,6 @@ public class Calculator implements ActionListener, KeyListener{
 					n1=Double.parseDouble(textField.getText());
 				}
 				operation='/';
-	//			textField.setText("/");
 				operatorSet=1;
 			
 			}
@@ -161,7 +158,6 @@ public class Calculator implements ActionListener, KeyListener{
 					n1=Double.parseDouble(textField.getText());
 				}
 				operation='x';
-	//			textField.setText("x");
 				operatorSet=1;
 			}
 			if(e.getSource()==operator[2])// -
@@ -172,7 +168,6 @@ public class Calculator implements ActionListener, KeyListener{
 					n1=Double.parseDouble(textField.getText());
 				}
 				operation='-';
-	//			textField.setText("-");
 				operatorSet=1;
 			}
 			if(e.getSource()==operator[3])// +
@@ -183,7 +178,6 @@ public class Calculator implements ActionListener, KeyListener{
 					n1=Double.parseDouble(textField.getText());
 				}
 				operation='+';
-	//			textField.setText("+");
 				operatorSet=1;
 				
 			}
@@ -202,23 +196,25 @@ public class Calculator implements ActionListener, KeyListener{
 
 			}
 			
-			if(e.getSource()==operator[5])// the point .
+			if(e.getSource()==operator[5])// decimal point .
 			{
 				if(decimalOne==false) {
 					textField.setText(textField.getText().concat("."));
 					decimalOne=true;
+				}else
+				if(decimalTwo==false) {
+					textField.setText(textField.getText().concat("."));
+					decimalTwo=true;
 				}
 					
 			}
 			
 			if(e.getSource()==equ)// ===
 			{
-				operatorSet=0;
-				n2=Double.parseDouble(textField.getText());
-				textField.setText(calculate());
-				operatorSet=1;
-				decimalOne=false;
+				equal();
 			}
+			
+			
 			
 			if(e.getSource()==clr)
 			{
@@ -226,24 +222,52 @@ public class Calculator implements ActionListener, KeyListener{
 				operation=' ';
 				operatorSet=0;
 				textField.setText("0");
-				decimalOne=false;
+				decimalOne=decimalTwo=false;
+				
 			}
 			if(e.getSource()==del)
 			{
-				String S = textField.getText();
-				if(S.length()==1 || S.equals("Cannot divide by 0.")) {
+				String bufferString = textField.getText();
+				//checks if textField only has one number, that is deleted or 
+				//if previous division was by 0
+				if(bufferString.length()==1 || bufferString.equals("Cannot divide by 0.")) {
 					textField.setText("0");
 				}
 				else {
 					textField.setText("");
-					for(int i = 0;i<S.length()-1;i++)
-						textField.setText(textField.getText()+S.charAt(i));
+					for(int i = 0;i<bufferString.length()-1;i++)
+						textField.setText(textField.getText()+bufferString.charAt(i));
 				}
-				decimalOne=false;
+				//check if it deleted decimal
+				if(bufferString.charAt(bufferString.length()-1)=='.') {
+					//check which number it came from
+					if(decimalTwo)
+						decimalTwo=false;
+					else {
+						decimalOne=false;
+					}
+				}
+				
 			
 		}
 	}
 	
+	private void equal() {
+		if(operatorSet==1) {
+			n2=Double.parseDouble(textField.getText());
+			textField.setText(calculate());
+			operatorSet=2;
+			decimalOne=false;
+		}
+		else 
+			if(operatorSet==2) {
+				n1=Double.parseDouble(textField.getText());
+				textField.setText(calculate());
+				
+			}
+		
+		decimalOne=false;
+	}
 	
 
 	private double roundNumber(double k, int i) {
@@ -263,22 +287,28 @@ public class Calculator implements ActionListener, KeyListener{
 
 	private double decimalToDouble() {
 		
-			String tempString=textField.getText();
-			int index=tempString.indexOf(".");
-			System.out.println("index "+index);
-			
-			String leftString=tempString.substring(0,index);
-			String rightString=tempString.substring(index+1);
-//			System.out.println("left is "+leftString+" right is "+rightString);
-			int count=rightString.length();
-			double result;
-			result=Integer.parseInt(leftString);
-			result*=Math.pow(10, count);
-			result+=Integer.parseInt(rightString);
-			result/=Math.pow(10, count);
+	    double result;
+	    String tempString=textField.getText();
+	    
+		int index=tempString.indexOf(".");
+		if(index==tempString.length()-1){//if decimal is last
+		    result=Integer.parseInt(tempString.substring(0,index));
+		}
+		else
+		{
+		    	String leftString=tempString.substring(0,index);
+		String rightString=tempString.substring(index+1);
+		int count=rightString.length();
+		
+		result=Integer.parseInt(leftString);
+		result*=Math.pow(10, count);
+		result+=Integer.parseInt(rightString);
+		result/=Math.pow(10, count);
+		}
 
-		return result;
-	}
+	return result;
+
+}
 
 	private String calculate() {
 		double res=0;
@@ -302,7 +332,7 @@ public class Calculator implements ActionListener, KeyListener{
 		}
 		if(res % 1 == 0)//check if res is int
 			return Integer.toString((int) res);
-		return Double.toString(res);
+		return Double.toString(roundNumber(res));
 	}
 
 	@Override
