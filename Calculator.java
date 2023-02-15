@@ -5,6 +5,8 @@ import java.awt.event.*;
 
 public class Calculator implements ActionListener, KeyListener{
 	
+	final int DECIMAL_THRESHOLD=4;
+	
 	JFrame frame;
 	JTextField textField;
 	JPanel panel;
@@ -20,6 +22,7 @@ public class Calculator implements ActionListener, KeyListener{
 	public char operation=' ';
 	public int operatorSet=0;
 	public boolean decimalOne=false,decimalTwo=false;
+	public int chain=-1;
 	
 	Calculator(){
 		
@@ -69,7 +72,7 @@ public class Calculator implements ActionListener, KeyListener{
 		}
 		
 		Font buttonFont2 = new Font("Serif", Font.BOLD, 12);
-		operator[4].setFont(buttonFont2);
+		operator[4].setFont(buttonFont2);//sqrt
 		
 		panel.setBounds(50, 125, 200, 200);
 		panel.setLayout(new GridLayout(4,4,10,10));	
@@ -110,13 +113,15 @@ public class Calculator implements ActionListener, KeyListener{
 
 	public static void main(String[] args) {
 		
-		System.out.println();
+		System.out.println(Double.parseDouble("10.42")-1.9);
 		new Calculator();
 	}
 	
 	public void displayNumber(int i) {
-		if(operatorSet==1 && decimalTwo==false) {
+//		if(operatorSet==1 && decimalTwo==false) {
+		if(operatorSet==1) {
 			textField.setText("");
+			operatorSet=0;
 		}
 		
 		if(textField.getText().equals("0")) {
@@ -202,7 +207,7 @@ public class Calculator implements ActionListener, KeyListener{
 			textField.setText(textField.getText().concat("."));
 			decimalOne=true;
 		}else
-		if(decimalTwo==false) {
+		if(decimalTwo==false&&chain==1) {
 			textField.setText(textField.getText().concat("."));
 			decimalTwo=true;
 		}
@@ -214,113 +219,69 @@ public class Calculator implements ActionListener, KeyListener{
 		operation=' ';
 		double k=0;
 		k=Math.sqrt(n1);
-		k=roundNumber(k,6);
+		k=roundNumber(k);
 		textField.setText(Double.toString(k));
 		operatorSet=1;
 		
 	}
+	
+	private void operationOnFirstNumber() {
+		if(chain==1)
+			equal();
+		n1=Double.parseDouble(textField.getText());
+		operatorSet=1;
+		chain=1;
+		decimalTwo=false;
+		
+	}
 
 	private void addition() {
-		if(decimalOne)
-			n1=decimalToDouble();
-		else {
-			n1=Double.parseDouble(textField.getText());
-		}
+		
+		operationOnFirstNumber();
 		operation='+';
-		operatorSet=1;
 		
 	}
 
 	private void subtraction() {
-		if(decimalOne)
-			n1=decimalToDouble();
-		else {
-			n1=Double.parseDouble(textField.getText());
-		}
+		operationOnFirstNumber();
 		operation='-';
-		operatorSet=1;
-		
 	}
 
 	private void multiplication() {
-		if(decimalOne)
-			n1=decimalToDouble();
-		else {
-			n1=Double.parseDouble(textField.getText());
-		}
+		operationOnFirstNumber();
 		operation='x';
-		operatorSet=1;
 		
 	}
 
 	private void division() {
-		if(decimalOne)
-			n1=decimalToDouble();
-		else {
-			n1=Double.parseDouble(textField.getText());
-		}
+		operationOnFirstNumber();
 		operation='/';
-		operatorSet=1;
 		
 	}
 
 	private void equal() {
-		if(operatorSet==1) {
-			n2=Double.parseDouble(textField.getText());
-			textField.setText(calculate());
-			operatorSet=2;
-			decimalOne=false;
+		if(operatorSet==2) {//repeat last op
+			n1=Double.parseDouble(textField.getText());
 		}
-		else 
-			if(operatorSet==2) {
-				n1=Double.parseDouble(textField.getText());
-				textField.setText(calculate());
-				
-			}
+		else {//normal
+			n2=Double.parseDouble(textField.getText());
+			operatorSet=2;
+//			System.out.println("n1="+n1+ " n2="+n2);
+		}
+		textField.setText(calculate());
 		
 		decimalOne=false;
+		chain=0;
 	}
 	
 
-	private double roundNumber(double k, int i) {
-		
-		k*=Math.pow(10, i);
-		k=(int)k;
-		k/=Math.pow(10, i);
-		return k;
-	}
 	private double roundNumber(double k) {
 		
-		k*=Math.pow(10, 6);
+		k*=Math.pow(10, DECIMAL_THRESHOLD);
 		k=(int)k;
-		k/=Math.pow(10, 6);
+		k/=Math.pow(10, DECIMAL_THRESHOLD);
 		return k;
 	}
-
-	private double decimalToDouble() {
-		
-	    double result;
-	    String tempString=textField.getText();
-	    
-		int index=tempString.indexOf(".");
-		if(index==tempString.length()-1){//if decimal is last
-		    result=Integer.parseInt(tempString.substring(0,index));
-		}
-		else
-		{
-		    	String leftString=tempString.substring(0,index);
-		String rightString=tempString.substring(index+1);
-		int count=rightString.length();
-		
-		result=Integer.parseInt(leftString);
-		result*=Math.pow(10, count);
-		result+=Integer.parseInt(rightString);
-		result/=Math.pow(10, count);
-		}
-
-	return result;
-
-}
 
 	private String calculate() {
 		double res=0;
